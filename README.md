@@ -1,18 +1,18 @@
-# Sinhala Sub Translator — Spoken Sinhala AI Subtitle Localization 🎬🇱🇰
+# Sinhala Sub Creator — Spoken Sinhala AI Subtitle Localization 🎬🇱🇰
 
-> **AI-Powered Subtitle Translator** that smoothly converts English movie subtitles (`.srt` and `.vtt`) into natural, colloquial **spoken Sinhala (කථික සිංහල)** rather than stiff, textbook prose. Powered by **Google Gemini 2.5 Flash** with a 100% Free Bring-Your-Own-Key (BYOK) architecture.
+> **AI-Powered Subtitle Creator** that smoothly converts English movie subtitles (`.srt` and `.vtt`) into natural, colloquial **spoken Sinhala (කථික සිංහල)** rather than stiff, textbook prose. Powered by **Google Gemini 2.5 Flash** with a 100% Free Bring-Your-Own-Key (BYOK) architecture.
 
 ---
 
-## 🌟 Why Sinhala Sub Translator? (The Diglossia Solution)
+## 🌟 Why Sinhala Sub Creator? (The Diglossia Solution)
 
 Traditional machine translation tools (Google Translate, DeepL) default to rigid, archaic **literary written Sinhala (ලිඛිත සිංහල)** — turning lively movie dialogues into awkward textbook essays:
 - *“Don’t worry about it”* ❌ Google Translate: `ඒ පිළිබඳව කරදර නොවන්න.`
-- *“Don’t worry about it”* ✅ **Sinhala Sub Translator:** `ඒ ගැන බයවෙන්න එපා.`
+- *“Don’t worry about it”* ✅ **Sinhala Sub Creator:** `ඒ ගැන බයවෙන්න එපා.`
 - *“Where are you going?”* ❌ Google Translate: `ඔබ කොහේද යන්නේ?`
-- *“Where are you going?”* ✅ **Sinhala Sub Translator:** `කොහෙද ඔය යන්නේ?`
+- *“Where are you going?”* ✅ **Sinhala Sub Creator:** `කොහෙද ඔය යන්නේ?`
 
-**Sinhala Sub Translator** solves this linguistic friction by tuning **Google Gemini 2.5 Flash** with custom system prompts that produce punchy, emotionally rich, and conversational Sri Lankan spoken dialogues ready for movies, TV series, and anime.
+**Sinhala Sub Creator** solves this linguistic friction by tuning **Google Gemini 2.5 Flash** with custom system prompts that produce punchy, emotionally rich, and conversational Sri Lankan spoken dialogues ready for movies, TV series, and anime.
 
 ---
 
@@ -64,7 +64,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey).
 2. Sign in with any regular Google Account.
 3. Click **"Create API key"**.
-4. Copy the key and paste it into the Sinhala Sub Translator popup. You're ready to translate unlimited subtitles!
+4. Copy the key and paste it into the Sinhala Sub Creator popup. You're ready to create unlimited subtitles!
 
 ---
 

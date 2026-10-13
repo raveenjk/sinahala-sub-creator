@@ -16,9 +16,9 @@ const notoSansSinhala = Noto_Sans_Sinhala({
 });
 
 export const metadata: Metadata = {
-  title: 'Sinhala Sub Translator — AI Spoken Sinhala Subtitle Localization',
+  title: 'Sinhala Sub Creator — AI Spoken Sinhala Subtitle Localization',
   description:
-    'Free AI-powered Sinhala subtitle translator. Convert English SRT and VTT files into natural colloquial spoken Sinhala (කථික සිංහල) with Google Gemini AI.',
+    'Free AI-powered Sinhala subtitle creator. Convert English SRT and VTT files into natural colloquial spoken Sinhala (කථික සිංහල) with Google Gemini AI.',
 };
 
 export default function RootLayout({

@@ -24,10 +24,10 @@ export default function Navbar({ hasApiKey, onOpenApiKeyModal }: NavbarProps) {
                   Sinhala<span className="text-blue-600">Sub</span>
                 </span>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-                  Translator
+                  Creator
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium">කථික සිංහල උපසිරැසි පරිවර්තකය</p>
+              <p className="text-[10px] text-slate-400 font-medium">කථික සිංහල උපසිරැසි නිර්මාණකරු</p>
             </div>
           </div>
 

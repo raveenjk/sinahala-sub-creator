@@ -197,7 +197,7 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
       <section className="text-center max-w-4xl mx-auto pt-6 pb-2">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-4 border border-blue-100 shadow-2xs">
           <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-          <span>ස්වාභාවික කථික සිංහල උපසිරැසි පරිවර්තකය</span>
+          <span>ස්වාභාවික කථික සිංහල උපසිරැසි නිර්මාණකරු (Sinhala Sub Creator)</span>
           <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
           <span>Google Gemini Flash Engine</span>
         </div>
@@ -463,7 +463,7 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
             <span>සැබෑ වෙනස පරීක්ෂා කරන්න</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            සාමාන්‍ය Google Translate සහ Sinhala Sub Translator අතර වෙනස
+            සාමාන්‍ය Google Translate සහ Sinhala Sub Creator අතර වෙනස
           </h2>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed">
             චිත්‍රපට නරඹන විට ලිඛිත සිංහලෙන් කියවීම රසවින්දනයට බාධාවකි. අපගේ AI එන්ජිම මගින් නිර්මාණය වන ස්වාභාවික වචන භාවිතය
