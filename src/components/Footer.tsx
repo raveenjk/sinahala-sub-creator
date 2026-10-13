@@ -13,7 +13,7 @@ export default function Footer() {
           </div>
           <div>
             <span className="font-extrabold text-slate-800 text-sm">
-              Sri<span className="text-blue-600">Subs</span> AI Pro
+              Sinhala<span className="text-blue-600">Sub</span> Translator
             </span>
             <p className="text-[11px] text-slate-400">Natural Sinhala Subtitle Localization Hub</p>
           </div>

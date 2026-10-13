@@ -463,7 +463,7 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
             <span>සැබෑ වෙනස පරීක්ෂා කරන්න</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            සාමාන්‍ය Google Translate සහ SriSubs Spoken Sinhala අතර වෙනස
+            සාමාන්‍ය Google Translate සහ Sinhala Sub Translator අතර වෙනස
           </h2>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed">
             චිත්‍රපට නරඹන විට ලිඛිත සිංහලෙන් කියවීම රසවින්දනයට බාධාවකි. අපගේ AI එන්ජිම මගින් නිර්මාණය වන ස්වාභාවික වචන භාවිතය
