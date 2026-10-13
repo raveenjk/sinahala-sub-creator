@@ -19,6 +19,8 @@ Traditional machine translation tools (Google Translate, DeepL) default to rigid
 ## 🚀 Key Features
 
 - **⚡ Smooth Conversational Translation:** Fine-tuned to output natural spoken Sinhala (කථික සිංහල) with contextual contractions, natural pronouns, and movie timing.
+- **🔤 Real-Time Singlish Typing Engine:** Built-in phonetic transliteration allows users to type in simple Romanized English (e.g., `mchn` $\to$ `මචං`, `oyaa` $\to$ `ඔයා`) directly in editable cells without needing an external Sinhala keyboard.
+- **⏱️ Subtitle Timing Shifter & Sync Tool:** 1-Click synchronization tool to shift all cue timestamps forward or backward (`±0.5s`, `±1.0s`, `±2.0s` or custom ms) with instant undo/reset support.
 - **🔑 Zero Cost BYOK Model:** Users connect their personal, free Google AI Studio Gemini API key. No credit card required, unlimited movie translations, zero server costs for the maintainer.
 - **🔒 In-Browser Privacy:** Subtitle files are parsed and serialized 100% locally in your browser memory. Your media files and scripts are never stored on external databases.
 - **📺 Flawless UTF-8 BOM Export:** Automatically formats exported `.srt` and `.vtt` files with UTF-8 Byte Order Mark (`\uFEFF`) so VLC, MX Player, and Smart TVs (Samsung, LG, Sony) render Sinhala Unicode letters without corruption or boxes.

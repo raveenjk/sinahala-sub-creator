@@ -16,10 +16,15 @@ import {
   Sliders,
   X,
   Search,
+  Clock,
+  Type,
+  RotateCcw,
+  Check,
 } from 'lucide-react';
 import { SubtitleCue, SubtitleFormat, TranslationGenre } from '@/types/subtitle';
-import { parseSubtitleFile, downloadSubtitleFile } from '@/lib/subtitle-parser';
+import { parseSubtitleFile, downloadSubtitleFile, shiftSubtitleCues } from '@/lib/subtitle-parser';
 import { translateCueBatch } from '@/lib/gemini';
+import { singlishToSinhala } from '@/lib/singlish';
 import { SAMPLE_CUES } from './SampleData';
 
 interface TranslatorWorkspaceProps {
@@ -30,10 +35,19 @@ interface TranslatorWorkspaceProps {
 export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: TranslatorWorkspaceProps) {
   const [fileName, setFileName] = useState<string>('');
   const [cues, setCues] = useState<SubtitleCue[]>([]);
+  const [originalCuesBackup, setOriginalCuesBackup] = useState<SubtitleCue[]>([]);
   const [genre, setGenre] = useState<TranslationGenre>('general');
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
+
+  // Singlish Real-time Transliteration Toggle
+  const [isSinglishEnabled, setIsSinglishEnabled] = useState<boolean>(true);
+
+  // Time Shifter State
+  const [isTimeShiftModalOpen, setIsTimeShiftModalOpen] = useState<boolean>(false);
+  const [shiftOffsetSeconds, setShiftOffsetSeconds] = useState<string>('1.0');
+  const [shiftSuccessMessage, setShiftSuccessMessage] = useState<string | null>(null);
 
   // Translation progress tracking
   const [completedCuesCount, setCompletedCuesCount] = useState<number>(0);
@@ -59,6 +73,7 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
           return;
         }
         setCues(parsed);
+        setOriginalCuesBackup(JSON.parse(JSON.stringify(parsed)));
         setCompletedCuesCount(0);
       } catch (err: any) {
         setErrorStatus('Subtitle file එක කියවීමේදී දෝෂයක් සිදුවිය: ' + err.message);
@@ -82,6 +97,7 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
   const handleLoadSample = () => {
     setFileName('Sample_Movie_Scene.srt');
     setCues(SAMPLE_CUES);
+    setOriginalCuesBackup(JSON.parse(JSON.stringify(SAMPLE_CUES)));
     setCompletedCuesCount(SAMPLE_CUES.length);
     setErrorStatus(null);
   };
@@ -172,11 +188,38 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
     setIsTranslating(false);
   };
 
-  // Editable Cell Handler
-  const handleSinhalaTextChange = (id: number, newText: string) => {
+  // Editable Cell Handler (with Singlish Auto-Transliteration)
+  const handleSinhalaTextChange = (id: number, rawInput: string) => {
+    const finalText = isSinglishEnabled ? singlishToSinhala(rawInput) : rawInput;
     setCues((prev) =>
-      prev.map((cue) => (cue.id === id ? { ...cue, sinhalaText: newText, status: 'done' } : cue))
+      prev.map((cue) => (cue.id === id ? { ...cue, sinhalaText: finalText, status: 'done' } : cue))
     );
+  };
+
+  // Time Shifter: Apply Offset in Milliseconds
+  const handleApplyTimeShift = (offsetMs: number) => {
+    if (!cues.length) return;
+    const shifted = shiftSubtitleCues(cues, offsetMs);
+    setCues(shifted);
+
+    const seconds = (offsetMs / 1000).toFixed(1);
+    const sign = offsetMs >= 0 ? '+' : '';
+    setShiftSuccessMessage(`සියලුම පේළි වල කාලය ${sign}${seconds}s කින් සාර්ථකව වෙනස් විය!`);
+    setTimeout(() => setShiftSuccessMessage(null), 3000);
+  };
+
+  // Time Shifter: Reset to Original Timestamps
+  const handleResetTimestamps = () => {
+    if (!originalCuesBackup.length) return;
+    setCues((prev) =>
+      prev.map((cue, i) => ({
+        ...cue,
+        startTime: originalCuesBackup[i]?.startTime || cue.startTime,
+        endTime: originalCuesBackup[i]?.endTime || cue.endTime,
+      }))
+    );
+    setShiftSuccessMessage('මුල් කාල සීමාවන් (Original Timestamps) යථා තත්ත්වයට පත් කරන ලදී.');
+    setTimeout(() => setShiftSuccessMessage(null), 3000);
   };
 
   // Progress Calculation
@@ -275,8 +318,32 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
                 </div>
               </div>
 
-              {/* Controls: Genre & Actions */}
+              {/* Controls: Time Shifter, Genre & Actions */}
               <div className="flex flex-wrap items-center gap-2.5">
+                {/* Time Shifter Modal Trigger Button */}
+                <button
+                  onClick={() => setIsTimeShiftModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-blue-400 rounded-full text-xs font-bold text-slate-700 shadow-2xs hover:bg-blue-50/50 transition-all cursor-pointer"
+                  title="Subtitle කාල සීමාව Sync කරන්න"
+                >
+                  <Clock className="w-3.5 h-3.5 text-blue-600" />
+                  <span>කාලය Sync (Time Shift)</span>
+                </button>
+
+                {/* Singlish Transliteration Toggle */}
+                <button
+                  onClick={() => setIsSinglishEnabled(!isSinglishEnabled)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${
+                    isSinglishEnabled
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                  }`}
+                  title="Singlish ටයිප් කරන විට සිංහලට හැරවීම (ON/OFF)"
+                >
+                  <Type className="w-3.5 h-3.5" />
+                  <span>Singlish: {isSinglishEnabled ? 'ON' : 'OFF'}</span>
+                </button>
+
                 {/* Genre Selector */}
                 <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-full px-3 py-1 shadow-2xs">
                   <Sliders className="w-3.5 h-3.5 text-slate-400" />
@@ -298,7 +365,7 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
                 {!isTranslating ? (
                   <button
                     onClick={startTranslation}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all cursor-pointer"
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all cursor-pointer"
                   >
                     <Play className="w-3.5 h-3.5 fill-current" />
                     <span>පරිවර්තනය ආරම්භ කරන්න</span>
@@ -306,7 +373,7 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
                 ) : (
                   <button
                     onClick={cancelTranslation}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rose-600 text-white text-xs font-bold shadow-md shadow-rose-200 hover:bg-rose-700 active:scale-95 transition-all cursor-pointer"
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-rose-600 text-white text-xs font-bold shadow-md shadow-rose-200 hover:bg-rose-700 active:scale-95 transition-all cursor-pointer"
                   >
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                     <span>නවත්වා නවතින්න (Cancel)</span>
@@ -316,7 +383,7 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
                 {/* Download Menu */}
                 <button
                   onClick={() => downloadSubtitleFile(fileName, cues, 'srt')}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download .SRT</span>
@@ -334,6 +401,14 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
                 </button>
               </div>
             </div>
+
+            {/* Time Shift Notification Alert */}
+            {shiftSuccessMessage && (
+              <div className="px-6 py-2.5 bg-emerald-50 border-b border-emerald-100 text-emerald-800 text-xs flex items-center gap-2 animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{shiftSuccessMessage}</span>
+              </div>
+            )}
 
             {/* Progress Bar (Visible while or after translating) */}
             <div className="px-6 py-3 bg-white border-b border-slate-100">
@@ -371,8 +446,8 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
               </div>
             )}
 
-            {/* Search / Filter Subtitles */}
-            <div className="px-6 py-3 bg-slate-50/50 flex items-center justify-between">
+            {/* Search / Filter & Singlish helper info */}
+            <div className="px-6 py-3 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
               <div className="relative w-full max-w-sm">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
@@ -383,7 +458,17 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
                   className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:border-blue-500 outline-none text-slate-800"
                 />
               </div>
-              <span className="text-xs text-slate-400">පේළි {filteredCues.length}ක් පෙන්වයි</span>
+
+              {/* Singlish Helper Tip */}
+              <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                <span className="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+                <span>
+                  {isSinglishEnabled
+                    ? 'Singlish Typing සක්‍රීයයි: ඉංග්‍රීසි අකුරින් ලියන විට (උදා: mchn) ස්වයංක්‍රීයව සිංහලට හැරේ'
+                    : 'සාමාන්‍ය Typing සක්‍රීයයි'}
+                </span>
+                <span className="text-slate-400">· පේළි {filteredCues.length}ක් පෙන්වයි</span>
+              </div>
             </div>
 
             {/* Interactive Side-by-Side Table */}
@@ -394,7 +479,9 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
                     <th className="py-3 px-4 w-14">#</th>
                     <th className="py-3 px-4 w-40">කාල සීමාව (Time)</th>
                     <th className="py-3 px-4 w-1/2">ඉංග්‍රීසි දෙබස (Original English)</th>
-                    <th className="py-3 px-4 w-1/2">කථික සිංහල (Spoken Sinhala - Editable)</th>
+                    <th className="py-3 px-4 w-1/2">
+                      කථික සිංහල (Spoken Sinhala - {isSinglishEnabled ? 'Singlish Enabled' : 'Raw Text'})
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs text-slate-800">
@@ -432,8 +519,8 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
             {/* Bottom Actions Bar */}
             <div className="p-4 sm:p-6 bg-slate-50 flex flex-wrap items-center justify-between gap-4">
               <div className="text-xs text-slate-500">
-                💡 <strong>Tip:</strong> සිංහල දෙබස් වල යම් වචනයක් වෙනස් කිරීමට අවශ්‍ය නම් අදාළ කොටුව මත Click කර සෘජුවම
-                Edit කළ හැක.
+                💡 <strong>Tip:</strong> සිංහල දෙබස් වල යම් වචනයක් වෙනස් කිරීමට අවශ්‍ය නම් අදාළ කොටුව මත Click කර
+                Singlish වලින් හෝ සෘජුවම Edit කළ හැක.
               </div>
               <div className="flex items-center gap-3">
                 <button
@@ -454,6 +541,137 @@ export default function TranslatorWorkspace({ apiKey, onOpenApiKeyModal }: Trans
           </div>
         )}
       </div>
+
+      {/* Subtitle Time Shifter / Sync Modal */}
+      {isTimeShiftModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">Subtitle කාල සීමාව Sync කරන්න (Time Shift)</h3>
+                  <p className="text-xs text-slate-500">වීඩියෝවට අනුකූලව Subtitle එක Forward හෝ Backward කරන්න</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsTimeShiftModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                චිත්‍රපටිය Play වෙද්දී Subtitle පේළි කටහඬට වඩා <strong>ඉස්සරහින්</strong> යනවා නම් කාලය වැඩි කරන්න (+),
+                <strong>පස්සෙන්</strong> එනවා නම් කාලය අඩු කරන්න (-).
+              </p>
+
+              {/* Quick Preset Buttons */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">
+                  ක්ෂණික Presets:
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => handleApplyTimeShift(-2000)}
+                    className="py-2 px-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 text-xs font-bold text-slate-700 transition-all cursor-pointer"
+                  >
+                    -2.0 තත්පර
+                  </button>
+                  <button
+                    onClick={() => handleApplyTimeShift(-1000)}
+                    className="py-2 px-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 text-xs font-bold text-slate-700 transition-all cursor-pointer"
+                  >
+                    -1.0 තත්පර
+                  </button>
+                  <button
+                    onClick={() => handleApplyTimeShift(-500)}
+                    className="py-2 px-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 text-xs font-bold text-slate-700 transition-all cursor-pointer"
+                  >
+                    -0.5 තත්පර
+                  </button>
+                  <button
+                    onClick={() => handleApplyTimeShift(500)}
+                    className="py-2 px-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 text-xs font-bold text-slate-700 transition-all cursor-pointer"
+                  >
+                    +0.5 තත්පර
+                  </button>
+                  <button
+                    onClick={() => handleApplyTimeShift(1000)}
+                    className="py-2 px-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 text-xs font-bold text-slate-700 transition-all cursor-pointer"
+                  >
+                    +1.0 තත්පර
+                  </button>
+                  <button
+                    onClick={() => handleApplyTimeShift(2000)}
+                    className="py-2 px-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 text-xs font-bold text-slate-700 transition-all cursor-pointer"
+                  >
+                    +2.0 තත්පර
+                  </button>
+                </div>
+              </div>
+
+              {/* Custom Shift Input */}
+              <div className="pt-2">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                  Custom කාලය ඇතුළත් කරන්න (තත්පර වලින්):
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={shiftOffsetSeconds}
+                    onChange={(e) => setShiftOffsetSeconds(e.target.value)}
+                    placeholder="උදා: 1.5 හෝ -1.5"
+                    className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 text-sm font-bold text-slate-800 outline-none transition-all"
+                  />
+                  <button
+                    onClick={() => {
+                      const sec = parseFloat(shiftOffsetSeconds);
+                      if (!isNaN(sec)) {
+                        handleApplyTimeShift(Math.round(sec * 1000));
+                      }
+                    }}
+                    className="px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                  >
+                    Apply කරන්න
+                  </button>
+                </div>
+              </div>
+
+              {/* Reset to Original Button */}
+              {originalCuesBackup.length > 0 && (
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">මුල් කාල සීමාවන් වෙත ආපසු යාමට:</span>
+                  <button
+                    onClick={handleResetTimestamps}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-all cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Reset to Original</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 bg-slate-50/80 border-t border-slate-100 text-right">
+              <button
+                onClick={() => setIsTimeShiftModalOpen(false)}
+                className="px-5 py-2 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+              >
+                ඉවරයි (Close)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Feature & Comparison Showcase (Diglossia Explanation) */}
       <section className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 shadow-sm space-y-8">

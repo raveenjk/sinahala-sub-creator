@@ -158,3 +158,57 @@ export function downloadSubtitleFile(baseName: string, cues: SubtitleCue[], form
   document.body.removeChild(downloadLink);
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Converts a subtitle timestamp (e.g. "00:01:23,450" or "00:01:23.450") to total milliseconds
+ */
+export function timestampToMs(timeStr: string): number {
+  const clean = timeStr.trim().replace(',', '.');
+  const parts = clean.split(':');
+  if (parts.length < 3) return 0;
+
+  const hours = parseInt(parts[0], 10) || 0;
+  const minutes = parseInt(parts[1], 10) || 0;
+  const [secsStr, msStr] = parts[2].split('.');
+  const seconds = parseInt(secsStr, 10) || 0;
+  const millis = parseInt((msStr || '0').padEnd(3, '0').slice(0, 3), 10) || 0;
+
+  return hours * 3600000 + minutes * 60000 + seconds * 1000 + millis;
+}
+
+/**
+ * Formats milliseconds back to subtitle timestamp "HH:MM:SS,mmm" or "HH:MM:SS.mmm"
+ */
+export function msToTimestamp(totalMs: number, delimiter: ',' | '.' = ','): string {
+  const safeMs = Math.max(0, Math.round(totalMs));
+  const hours = Math.floor(safeMs / 3600000);
+  const minutes = Math.floor((safeMs % 3600000) / 60000);
+  const seconds = Math.floor((safeMs % 60000) / 1000);
+  const millis = safeMs % 1000;
+
+  const pad = (n: number, z = 2) => String(n).padStart(z, '0');
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}${delimiter}${pad(millis, 3)}`;
+}
+
+/**
+ * Shifts all subtitle cue timestamps by a specified offset in milliseconds
+ * (e.g. +1500 to delay by 1.5s, or -2000 to advance by 2s)
+ */
+export function shiftSubtitleCues(cues: SubtitleCue[], offsetMs: number): SubtitleCue[] {
+  return cues.map((cue) => {
+    const isVtt = cue.startTime.includes('.');
+    const delimiter = isVtt ? '.' : ',';
+
+    const startMs = timestampToMs(cue.startTime);
+    const endMs = timestampToMs(cue.endTime);
+
+    const newStart = msToTimestamp(startMs + offsetMs, delimiter);
+    const newEnd = msToTimestamp(endMs + offsetMs, delimiter);
+
+    return {
+      ...cue,
+      startTime: newStart,
+      endTime: newEnd,
+    };
+  });
+}
